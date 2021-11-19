@@ -1,0 +1,145 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them!
+#--------------------------------------------------------------------------------------------
+Camera.type: "PinHole"
+
+# Camera calibration and distortion parameters (OpenCV) 
+Camera.fx: 521.7011918189967
+Camera.fy: 521.7011918189967
+Camera.cx: 366.4945831298828
+Camera.cy: 219.8166751861572
+
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
+
+Camera.bFishEye: 0
+
+Camera.width: 752
+Camera.height: 480
+
+# Camera frames per second 
+Camera.fps: 25.0
+
+# stereo baseline times fx
+Camera.bf: 132.7552716880647
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# Close/Far threshold. Baseline times.
+ThDepth: 35.0
+
+#--------------------------------------------------------------------------------------------
+# Stereo Rectification. Only if you need to pre-rectify the images.
+# Camera.fx, .fy, etc must be the same as in LEFT.P
+#--------------------------------------------------------------------------------------------
+LEFT.height: 480
+LEFT.width: 752
+LEFT.D: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data:[-0.11566634307511932, 0.08987699968528752, -0.0005582794020918663, -0.0018357664315637888, 0.0]
+LEFT.K: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [605.7455777299853, 0.0, 370.360573680134, 0.0, 607.9735414995575, 206.06348100221066, 0.0, 0.0, 1.0]
+LEFT.R:  !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [0.9998247834400087, -0.0184672588526648, 0.003059864312096492, 0.01848792725738053, 0.9998054809500045, -0.006869993308285769, -0.002932399165457197, 0.006925360120510623, 0.9999717198112833]
+LEFT.P:  !!opencv-matrix
+   rows: 3
+   cols: 4
+   dt: d
+   data: [521.7011918189967, 0.0, 366.4945831298828, 0.0, 0.0, 521.7011918189967, 219.8166751861572, 0.0,  0.0, 0.0, 1, 0.0]
+
+RIGHT.height: 480
+RIGHT.width: 752
+RIGHT.D: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data:[-0.12488375896406986, 0.10256449638718221, 0.00036679194033630247, 0.00021222103272629827, 0.0]
+RIGHT.K: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [604.6980984497027, 0.0, 365.754804193908, 0.0, 606.3456604476274, 235.0315549075409, 0.0, 0.0, 1]
+RIGHT.R:  !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [0.9991215028716449, 0.0417624181631838, -0.003481799630810426, -0.04173740148588934, 0.9991042878133986, 0.006972186894184469, 0.003769856325036609, -0.006820740578935016, 0.9999696323795255]
+RIGHT.P:  !!opencv-matrix
+   rows: 3
+   cols: 4
+   dt: d
+   data: [521.7011918189967, 0.0, 368.3387985229492, -132.7552716880647, 0.0, 521.7011918189967, 219.8166751861572, 0.0, 0.0, 0.0, 1, 0.0]
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+# ORB Extractor: Number of features per image
+ORBextractor.nFeatures: 1200
+
+# ORB Extractor: Scale factor between levels in the scale pyramid 	
+ORBextractor.scaleFactor: 1.2
+
+# ORB Extractor: Number of levels in the scale pyramid	
+ORBextractor.nLevels: 8
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast			
+ORBextractor.iniThFAST: 16
+ORBextractor.minThFAST: 4
+
+#--------------------------------------------------------------------------------------------
+# SLAM Parameter
+# 0->Full Point Line SLAM (default)
+# 1->Only Line Pose Estimation and Local Mapping using the Euclidean distance as an error function (Loop Closing thread is deactivated)
+# 2->Only Line Pose Estimation and Local Mapping using the angular distance as an error function (Loop Closing thread is deactivated)
+# 3->Only Line Pose Estimation and Local Mapping using both the Euclidean and angular distance as an error function (Loop Closing thread is deactivated)
+#--------------------------------------------------------------------------------------------
+SLAM             : 0
+
+#--------------------------------------------------------------------------------------------
+# Line Extractor
+# 0->LSD Extractor (default)
+# 1->ED Extractor (Suggested not to be used as long as only Line SLAM is chosen i.e. SLAM->1 or SLAM->2 or SLAM->3)
+#--------------------------------------------------------------------------------------------
+extractor        : 0
+
+#--------------------------------------------------------------------------------------------
+# Line Extractor Parameters
+# You can decrease the lsd_scale parameter in order to decrease computational time e.g. lsd_scale->0.6 or lsd_scale->0.5
+# Also in order to decrease computational time you can set levels to 1
+#--------------------------------------------------------------------------------------------
+nfeatures        : 0     # Number of Line Features (set to 0 if keeping all lines) -> Used for LSD and ED
+lsd_refine       : 0     # -> Used Only for LSD
+lsd_scale        : 1.0   # The scale of the image that will be used to find the lines. Range (0..1.0] -> Used Only for LSD
+levels           : 2     # Levels of the Pyramid (Only 1 and 2 can be selected) -> Used for LSD and ED
+scale            : 2.0   # Scale factor between levels in the scale pyramid -> Used for LSD and ED
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize:2
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3
+Viewer.ViewpointX: 0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500
