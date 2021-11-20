@@ -28,3 +28,15 @@ ORB-LINE-SLAM is released under [GPLv3 license](https://github.com/Giannis-Alama
 
 # 2. Prerequisites
 We have tested the library in **Ubuntu 18.04**, but it should be easy to compile in other platforms. A powerful computer will ensure real-time performance and provide more stable and accurate results. In order to reduce the computational time, the user can reduce the value of lsd_scale parameter in the yaml file.
+
+## C++11 or C++0x Compiler
+We use the new thread and chrono functionalities of C++11.
+
+## Pangolin
+We use [Pangolin](https://github.com/stevenlovegrove/Pangolin) for visualization and user interface. Dowload and install instructions can be found at: https://github.com/stevenlovegrove/Pangolin.
+
+## OpenCV
+We use [OpenCV](http://opencv.org) to manipulate images and features. Dowload and install instructions can be found at: http://opencv.org. **Required at leat 3.0. Tested with OpenCV 3.2.0**.
+
+## Eigen3
+Required by g2o (see below). Download and install instructions can be found at: http://eigen.tuxfamily.org. **Required at least 3.1.0** **Tested with Eigen 3.3.8**.
