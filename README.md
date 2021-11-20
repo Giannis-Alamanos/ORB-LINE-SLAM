@@ -2,7 +2,7 @@
 
 **Authors:** Ioannis Alamanos, Georgios Thanellas, Costas Tzafestas.
 
-ORB-LINE-SLAM is a **Visual SLAM** library for **Stereo Cameras** which is able to function either by combining point and line features or by using line features exclusively. We provide examples to run ORB-LINE-SLAM in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) and in the [UMA dataset](http://mapir.isa.uma.es/mapirwebsite/index.php/mapir-downloads/291-uma-visual-inertial-dataset.html). The system is also able to operate in real-time using **ROS**.
+ORB-LINE-SLAM is a **Visual SLAM** library for **Stereo Cameras** which is able to function either by combining point and line features or by using line features exclusively. We provide examples to run ORB-LINE-SLAM in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) and in the [UMA dataset](http://mapir.isa.uma.es/mapirwebsite/index.php/mapir-downloads/291-uma-visual-inertial-dataset.html). The system is also able to run in real-time using **ROS**.
 
 This software is based on [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) developed by Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, [José M. M. Montiel](http://webdiis.unizar.es/~josemari/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/).
 
@@ -21,3 +21,7 @@ This software is based on [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) d
 [Monocular] Raúl Mur-Artal, José M. M. Montiel and Juan D. Tardós. **ORB-SLAM: A Versatile and Accurate Monocular SLAM System**. *IEEE Transactions on Robotics,* vol. 31, no. 5, pp. 1147-1163, 2015. (**2015 IEEE Transactions on Robotics Best Paper Award**). **[PDF](https://arxiv.org/pdf/1502.00956.pdf)**.
 
 [DBoW2 Place Recognition] Dorian Gálvez-López and Juan D. Tardós. **Bags of Binary Words for Fast Place Recognition in Image Sequences**. *IEEE Transactions on Robotics,* vol. 28, no. 5, pp. 1188-1197, 2012. **[PDF](http://doriangalvez.com/php/dl.php?dlp=GalvezTRO12.pdf)**
+
+# 1. License
+
+ORB-LINE-SLAM is released under [GPLv3 license](https://github.com/Giannis-Alamanos/ORB-LINE-SLAM/blob/main/LICENSE). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/Giannis-Alamanos/ORB-LINE-SLAM/blob/main/Dependencies.md).
