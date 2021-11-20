@@ -136,18 +136,3 @@ Viewer.ViewpointX: 0
 Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -1.8
 Viewer.ViewpointF: 500
-
-# LSD Parameters 
-
-lsd_nfeatures    : 300        # set to 0 if keeping all lines (300)
-lsd_refine       : 0
-lsd_scale        : 1.2
-lsd_sigma_scale  : 0.6
-lsd_quant        : 2.0
-lsd_ang_th       : 22.5
-lsd_log_eps      : 1.0
-lsd_density_th   : 0.6
-lsd_n_bins       : 1024
-min_line_length  : 0.025      # min. line length (relative to img size)
-
-
