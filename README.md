@@ -51,3 +51,17 @@ Required to calculate the alignment of the trajectory with the ground truth. **R
 ## ROS (optional)
 
 We provide some examples to process live input using ROS. Building these examples is optional. These have been tested with ROS Melodic under Ubuntu 18.04.
+
+# 3. Building ORB-LINE-SLAM library and examples
+
+Clone the repository:
+```
+git clone https://github.com/Giannis-Alamanos/ORB-LINE-SLAM.git ORB-LINE-SLAM
+```
+
+We provide a script `build.sh` to build the *Thirdparty* libraries and *ORB-SLAM3*. Please make sure you have installed all required dependencies (see section 2). Execute:
+```
+cd ORB-LINE-SLAM
+chmod +x build.sh
+./build.sh
+```
