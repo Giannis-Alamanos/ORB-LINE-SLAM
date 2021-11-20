@@ -25,3 +25,6 @@ This software is based on [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) d
 # 1. License
 
 ORB-LINE-SLAM is released under [GPLv3 license](https://github.com/Giannis-Alamanos/ORB-LINE-SLAM/blob/main/LICENSE). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/Giannis-Alamanos/ORB-LINE-SLAM/blob/main/Dependencies.md).
+
+# 2. Prerequisites
+We have tested the library in **Ubuntu 18.04**, but it should be easy to compile in other platforms. A powerful computer will ensure real-time performance and provide more stable and accurate results. In order to reduce the computational time, the user can reduce the value of lsd_scale parameter in the yaml file.
