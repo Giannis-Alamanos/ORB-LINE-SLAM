@@ -83,4 +83,6 @@ chmod +x build.sh
 
 ./Examples/Stereo-Line/stereo_line_UMA ./Vocabulary/ORBvoc.txt ./Vocabulary/LSDvoc.txt ./Examples/Stereo-Line/UMA_ueye.yaml SEQUENCE ./Examples/Stereo-Line/UMA_TimeStamps/SEQUENCE.txt
 
-To run sequences from UMA Dataset other than hall1-rev-eng and corridor-eng, the user has to create the file containing the Timestamps.
+To run sequences from UMA Dataset other than hall1-rev-eng and corridor-eng, the user has to create a file containing the Timestamps.
+
+
