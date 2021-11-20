@@ -65,3 +65,22 @@ cd ORB-LINE-SLAM
 chmod +x build.sh
 ./build.sh
 ```
+
+
+# 4. Examples
+
+## EuRoC Dataset
+
+1. Download a sequence (ASL format) from http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
+2. Execute the following command in the terminal:
+
+./Examples/Stereo-Line/stereo_line_euroc ./Vocabulary/ORBvoc.txt ./Vocabulary/LSDvoc.txt ./Examples/Stereo-Line/EuRoC.yaml SEQUENCE ./Examples/Stereo-Line/EuRoC_TimeStamps/SEQUENCE.txt
+
+## UMA Dataset
+
+1. Download a sequence from http://mapir.isa.uma.es/mapirwebsite/index.php/mapir-downloads/291-uma-visual-inertial-dataset.html
+2. Execute the following command in the terminal:
+
+./Examples/Stereo-Line/stereo_line_UMA ./Vocabulary/ORBvoc.txt ./Vocabulary/LSDvoc.txt ./Examples/Stereo-Line/UMA_ueye.yaml SEQUENCE ./Examples/Stereo-Line/UMA_TimeStamps/SEQUENCE.txt
+
+To run sequences from UMA Dataset other than hall1-rev-eng and corridor-eng, the user has to create the file containing the Timestamps.
