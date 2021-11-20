@@ -85,4 +85,45 @@ chmod +x build.sh
 
 To run sequences from UMA Dataset other than hall1-rev-eng and corridor-eng, the user has to create a file containing the Timestamps.
 
+# 5. ROS Examples
 
+Tested with ROS Melodic and ubuntu 18.04.
+
+
+1. Open .bashrc file:
+  ```
+  gedit ~/.bashrc
+  ```
+and add at the end the following line. Replace PATH by the folder where you cloned ORB-LINE-SLAM:
+
+  ```
+  export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:PATH/ORB-LINE-SLAM/Examples/ROS
+  ```
+
+2. Execute `build_ros.sh` script:
+
+  ```
+  chmod +x build_ros.sh
+  ./build_ros.sh
+  ```
+  
+For a stereo input from topic `/camera/left/image_raw` and `/camera/right/image_raw` run node ORB_SLAM3/Stereo. You will need to provide the vocabulary files and a settings file. If you **provide rectification matrices** (see Examples/Stereo-Line/EuRoC.yaml example), the node will recitify the images online, **otherwise images must be pre-rectified**.
+
+  ```
+  rosrun ORB_SLAM3 Stereo PATH_TO_VOCABULARY1 PATH_TO_VOCABULARY2 PATH_TO_SETTINGS_FILE ONLINE_RECTIFICATION
+  ```
+  
+  **Example**: Download a rosbag (e.g. V1_01_easy.bag) from the EuRoC dataset (http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). Open 3 tabs on the terminal and run the following command at each tab:
+  ```
+  roscore
+  ```
+  
+  ```
+  rosrun ORB_SLAM3 Stereo ./Vocabulary/ORBvoc.txt ./Vocabulary/LSDvoc.txt ./Examples/Stereo-Line/EuRoC.yaml true
+  ```
+  
+  ```
+  rosbag play --pause V1_01_easy.bag /cam0/image_raw:=/camera/left/image_raw /cam1/image_raw:=/camera/right/image_raw
+  ```
+  
+Once ORB-LINE-SLAM has loaded the vocabulary, press space in the rosbag tab. Enjoy!. Note: a powerful computer is required to run exigent sequences in real-time.
