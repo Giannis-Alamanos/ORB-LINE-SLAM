@@ -5052,6 +5052,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
 
     const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
     const vector<MapPoint*> vpMPs = pMap->GetAllMapPoints();
+    const vector<MapLine*> vpMLs = pMap->GetAllMapLines();
 
     const unsigned int nMaxKFid = pMap->GetMaxKFid();
 
@@ -5346,6 +5347,42 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
         pMP->SetWorldPos(cvCorrectedP3Dw);
 
         pMP->UpdateNormalAndDepth();
+    }
+
+    // Correct lines. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+    for(size_t i=0, iend=vpMLs.size(); i<iend; i++)
+    {
+        MapLine* pML = vpMLs[i];
+
+        if(pML->isBad())
+            continue;
+
+        int nIDrl;
+        if(pML->mnCorrectedByKF==pCurKF->mnId)
+        {
+            nIDrl = pML->mnCorrectedReference;
+        }
+        else
+        {
+            KeyFrame* pRefKF = pML->GetReferenceKeyFrame();
+            nIDrl = pRefKF->mnId;
+        }
+
+
+        g2o::Sim3 Srw = vScw[nIDrl];
+        g2o::Sim3 correctedSwr = vCorrectedSwc[nIDrl];
+
+        Vector6d P3Dw = pML->GetWorldPos();
+        Eigen::Matrix<double,3,1> eigP3Dw_sp = P3Dw.head(3);
+        Eigen::Matrix<double,3,1> eigP3Dw_ep = P3Dw.tail(3);
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_sp = correctedSwr.map(Srw.map(eigP3Dw_sp));
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_ep = correctedSwr.map(Srw.map(eigP3Dw_ep));
+
+        //cv::Mat cvCorrectedP3Dw_sp = Converter::toCvMat(eigCorrectedP3Dw_sp);
+        //cv::Mat cvCorrectedP3Dw_ep = Converter::toCvMat(eigCorrectedP3Dw_ep);
+        pML->SetWorldPos(eigCorrectedP3Dw_sp, eigCorrectedP3Dw_ep);
+
+        pML->UpdateNormalAndDepth();
     }
 
     // TODO Check this changeindex
@@ -5800,12 +5837,13 @@ void Optimizer::OptimizeEssentialGraph6DoF(KeyFrame* pCurKF, vector<KeyFrame*> &
 }
 
 void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFixedKFs, vector<KeyFrame*> &vpFixedCorrectedKFs,
-                                       vector<KeyFrame*> &vpNonFixedKFs, vector<MapPoint*> &vpNonCorrectedMPs)
+                                       vector<KeyFrame*> &vpNonFixedKFs, vector<MapPoint*> &vpNonCorrectedMPs, vector<MapLine*> &vpNonCorrectedMLs)
 {
     Verbose::PrintMess("Opt_Essential: There are " + to_string(vpFixedKFs.size()) + " KFs fixed in the merged map", Verbose::VERBOSITY_DEBUG);
     Verbose::PrintMess("Opt_Essential: There are " + to_string(vpFixedCorrectedKFs.size()) + " KFs fixed in the old map", Verbose::VERBOSITY_DEBUG);
     Verbose::PrintMess("Opt_Essential: There are " + to_string(vpNonFixedKFs.size()) + " KFs non-fixed in the merged map", Verbose::VERBOSITY_DEBUG);
     Verbose::PrintMess("Opt_Essential: There are " + to_string(vpNonCorrectedMPs.size()) + " MPs non-corrected in the merged map", Verbose::VERBOSITY_DEBUG);
+    Verbose::PrintMess("Opt_Essential: There are " + to_string(vpNonCorrectedMLs.size()) + " MLs non-corrected in the merged map", Verbose::VERBOSITY_DEBUG);
 
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -6181,6 +6219,54 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
         pMPi->UpdateNormalAndDepth();
     }
 
+    // Correct lines. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+    for(MapLine* pMLi : vpNonCorrectedMLs)
+    {
+        if(pMLi->isBad())
+            continue;
+
+        Verbose::PrintMess("Opt_Essential: ML id " + to_string(pMLi->mnId), Verbose::VERBOSITY_DEBUG);
+
+        KeyFrame* pRefKF = pMLi->GetReferenceKeyFrame();
+        g2o::Sim3 Srw;
+        g2o::Sim3 correctedSwr;
+        while(pRefKF->isBad())
+        {
+            if(!pRefKF)
+            {
+                Verbose::PrintMess("ML " + to_string(pMLi->mnId) + " without a valid reference KF", Verbose::VERBOSITY_DEBUG);
+                break;
+            }
+
+            pMLi->EraseObservation(pRefKF);
+            pRefKF = pMLi->GetReferenceKeyFrame();
+        }
+
+            cv::Mat TNonCorrectedwr = pRefKF->mTwcBefMerge;
+            Eigen::Matrix<double,3,3> RNonCorrectedwr = Converter::toMatrix3d(TNonCorrectedwr.rowRange(0,3).colRange(0,3));
+            Eigen::Matrix<double,3,1> tNonCorrectedwr = Converter::toVector3d(TNonCorrectedwr.rowRange(0,3).col(3));
+            Srw = g2o::Sim3(RNonCorrectedwr,tNonCorrectedwr,1.0).inverse();
+
+            cv::Mat Twr = pRefKF->GetPoseInverse();
+            Eigen::Matrix<double,3,3> Rwr = Converter::toMatrix3d(Twr.rowRange(0,3).colRange(0,3));
+            Eigen::Matrix<double,3,1> twr = Converter::toVector3d(Twr.rowRange(0,3).col(3));
+            correctedSwr = g2o::Sim3(Rwr,twr,1.0);
+        //}
+        //cout << "Opt_Essential: Loaded the KF reference position" << endl;
+
+        Vector6d P3Dw = pMLi->GetWorldPos();
+        Eigen::Matrix<double,3,1> eigP3Dw_sp = P3Dw.head(3);
+        Eigen::Matrix<double,3,1> eigP3Dw_ep = P3Dw.tail(3);
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_sp = correctedSwr.map(Srw.map(eigP3Dw_sp));
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_ep = correctedSwr.map(Srw.map(eigP3Dw_ep));
+
+        //cv::Mat cvCorrectedP3Dw_sp = Converter::toCvMat(eigCorrectedP3Dw_sp);
+        //cv::Mat cvCorrectedP3Dw_ep = Converter::toCvMat(eigCorrectedP3Dw_ep);
+        pMLi->SetWorldPos(eigCorrectedP3Dw_sp, eigCorrectedP3Dw_ep);
+
+        pMLi->UpdateNormalAndDepth();
+    }
+
     Verbose::PrintMess("Opt_Essential: End of the optimization", Verbose::VERBOSITY_DEBUG);
 }
 
@@ -6202,6 +6288,7 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF,
 
     const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
     const vector<MapPoint*> vpMPs = pMap->GetAllMapPoints();
+    const vector<MapLine*> vpMLs = pMap->GetAllMapLines();
 
     const unsigned int nMaxKFid = pMap->GetMaxKFid();
 
@@ -6415,6 +6502,42 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF,
         pMP->SetWorldPos(cvCorrectedP3Dw);
 
         pMP->UpdateNormalAndDepth();
+    }
+
+    // Correct lines. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+    for(size_t i=0, iend=vpMLs.size(); i<iend; i++)
+    {
+        MapLine* pML = vpMLs[i];
+
+        if(pML->isBad())
+            continue;
+
+        int nIDrl;
+        if(pML->mnCorrectedByKF==pCurKF->mnId)
+        {
+            nIDrl = pML->mnCorrectedReference;
+        }
+        else
+        {
+            KeyFrame* pRefKF = pML->GetReferenceKeyFrame();
+            nIDrl = pRefKF->mnId;
+        }
+
+
+        g2o::Sim3 Srw = vScw[nIDrl];
+        g2o::Sim3 correctedSwr = vCorrectedSwc[nIDrl];
+
+        Vector6d P3Dw = pML->GetWorldPos();
+        Eigen::Matrix<double,3,1> eigP3Dw_sp = P3Dw.head(3);
+        Eigen::Matrix<double,3,1> eigP3Dw_ep = P3Dw.tail(3);
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_sp = correctedSwr.map(Srw.map(eigP3Dw_sp));
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_ep = correctedSwr.map(Srw.map(eigP3Dw_ep));
+
+        //cv::Mat cvCorrectedP3Dw_sp = Converter::toCvMat(eigCorrectedP3Dw_sp);
+        //cv::Mat cvCorrectedP3Dw_ep = Converter::toCvMat(eigCorrectedP3Dw_ep);
+        pML->SetWorldPos(eigCorrectedP3Dw_sp, eigCorrectedP3Dw_ep);
+
+        pML->UpdateNormalAndDepth();
     }
 
     // TODO Check this changeindex
@@ -11716,6 +11839,7 @@ void Optimizer::OptimizeEssentialGraph4DoF(Map* pMap, KeyFrame* pLoopKF, KeyFram
 
     const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
     const vector<MapPoint*> vpMPs = pMap->GetAllMapPoints();
+    const vector<MapLine*> vpMLs = pMap->GetAllMapLines();
 
     const unsigned int nMaxKFid = pMap->GetMaxKFid();
 
@@ -11999,6 +12123,35 @@ void Optimizer::OptimizeEssentialGraph4DoF(Map* pMap, KeyFrame* pLoopKF, KeyFram
         pMP->SetWorldPos(cvCorrectedP3Dw);
 
         pMP->UpdateNormalAndDepth();
+    }
+
+    // Correct lines. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+    for(size_t i=0, iend=vpMLs.size(); i<iend; i++)
+    {
+        MapLine* pML = vpMLs[i];
+
+        if(pML->isBad())
+            continue;
+
+        int nIDrl;
+
+        KeyFrame* pRefKF = pML->GetReferenceKeyFrame();
+        nIDrl = pRefKF->mnId;
+
+        g2o::Sim3 Srw = vScw[nIDrl];
+        g2o::Sim3 correctedSwr = vCorrectedSwc[nIDrl];
+
+        Vector6d P3Dw = pML->GetWorldPos();
+        Eigen::Matrix<double,3,1> eigP3Dw_sp = P3Dw.head(3);
+        Eigen::Matrix<double,3,1> eigP3Dw_ep = P3Dw.tail(3);
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_sp = correctedSwr.map(Srw.map(eigP3Dw_sp));
+        Eigen::Matrix<double,3,1> eigCorrectedP3Dw_ep = correctedSwr.map(Srw.map(eigP3Dw_ep));
+
+        //cv::Mat cvCorrectedP3Dw_sp = Converter::toCvMat(eigCorrectedP3Dw_sp);
+        //cv::Mat cvCorrectedP3Dw_ep = Converter::toCvMat(eigCorrectedP3Dw_ep);
+        pML->SetWorldPos(eigCorrectedP3Dw_sp, eigCorrectedP3Dw_ep);
+
+        pML->UpdateNormalAndDepth();
     }
     pMap->IncreaseChangeIndex();
 }
