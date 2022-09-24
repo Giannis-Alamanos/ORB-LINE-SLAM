@@ -2355,7 +2355,7 @@ void LoopClosing::MergeLocalWithLines()
         // Optimize graph (and update the loop position for each element form the begining to the end)
         if(mpTracker->mSensor != System::MONOCULAR)
         {
-            Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs, vpCurrentMapKFs, vpCurrentMapMPs);
+            Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs, vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapMLs);
         }
 
 
@@ -3015,10 +3015,10 @@ void LoopClosing::MergeLocal()
         Verbose::PrintMess("MERGE-VISUAL: Local Map stopped", Verbose::VERBOSITY_DEBUG);
 
         // Optimize graph (and update the loop position for each element form the begining to the end)
-        if(mpTracker->mSensor != System::MONOCULAR)
-        {
-            Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs, vpCurrentMapKFs, vpCurrentMapMPs);
-        }
+        //if(mpTracker->mSensor != System::MONOCULAR)
+        //{
+        //    Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs, vpCurrentMapKFs, vpCurrentMapMPs);
+        //}
 
 
         {
