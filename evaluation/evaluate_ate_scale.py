@@ -1,3 +1,4 @@
+# Modified by Ioannis Alamanos
 # Modified by Raul Mur-Artal
 # Automatically compute the optimal scale factor for monocular VO/SLAM.
 
@@ -45,6 +46,91 @@ import sys
 import numpy
 import argparse
 import associate
+
+def quaternion_pose_matrix(Q):
+    """
+    Covert a quaternion into a full three-dimensional rotation matrix.
+ 
+    Input
+    :param Q: A 7 element array representing the quaternion (q0,q1,q2,q3) 
+ 
+    Output
+    :return: A 3x3 element matrix representing the full 3D rotation matrix. 
+             This rotation matrix converts a point in the local reference 
+             frame to a point in the global reference frame.
+    """
+    # Extract the values from Q
+    q0 = Q[0,6]
+    q1 = Q[0,3]
+    q2 = Q[0,4]
+    q3 = Q[0,5]
+     
+    # First row of the rotation matrix
+    r00 = 2 * (q0 * q0 + q1 * q1) - 1
+    r01 = 2 * (q1 * q2 - q0 * q3)
+    r02 = 2 * (q1 * q3 + q0 * q2)
+     
+    # Second row of the rotation matrix
+    r10 = 2 * (q1 * q2 + q0 * q3)
+    r11 = 2 * (q0 * q0 + q2 * q2) - 1
+    r12 = 2 * (q2 * q3 - q0 * q1)
+     
+    # Third row of the rotation matrix
+    r20 = 2 * (q1 * q3 - q0 * q2)
+    r21 = 2 * (q2 * q3 + q0 * q1)
+    r22 = 2 * (q0 * q0 + q3 * q3) - 1
+     
+    # 3x3 rotation matrix
+    rot_matrix = numpy.array([[r00, r01, r02, Q[0,0]],
+                           [r10, r11, r12, Q[0,1]],
+                           [r20, r21, r22, Q[0,2]],
+                           [0, 0, 0, 1]])
+                            
+    return rot_matrix
+
+def compute_distance(transform):
+    """
+    Compute the distance of the translational component of a 4x4 homogeneous matrix.
+    """
+    return numpy.linalg.norm(transform[0:3,3])
+
+def compute_angle(transform):
+    """
+    Compute the rotation angle from a 4x4 homogeneous matrix.
+    """
+    # an invitation to 3-d vision, p 27
+    return numpy.arccos( min(1,max(-1, (numpy.trace(transform[0:3,0:3]) - 1)/2) ))
+
+def ominus(a,b):
+    """
+    Compute the relative 3D transformation between a and b.
+    
+    Input:
+    a -- first pose (homogeneous 4x4 matrix)
+    b -- second pose (homogeneous 4x4 matrix)
+    
+    Output:
+    Relative 3D transformation from a to b.
+    """
+    return numpy.dot(numpy.linalg.inv(a),b)
+
+def compute_relative_error(traj_gt, traj_est, associations):
+    result = []
+    for i in range (1,len(traj_gt)):
+	if (associations[i][0] - associations[i-1][0]) < 150000000 and (associations[i][1] - associations[i-1][1]) < 150000000:
+        	error44 = ominus(  ominus( quaternion_pose_matrix(traj_est[i]), quaternion_pose_matrix(traj_est[i-1] )),
+                           ominus( quaternion_pose_matrix(traj_gt[i]), quaternion_pose_matrix(traj_gt[i-1] )) )
+                #error44 = numpy.dot(numpy.linalg.inv(numpy.dot(numpy.linalg.inv(quaternion_pose_matrix(traj_gt[i-1])),quaternion_pose_matrix(traj_gt[i]))), 
+                #         numpy.dot(numpy.linalg.inv(quaternion_pose_matrix(traj_est[i-1])) , quaternion_pose_matrix(traj_est[i])))
+        	trans = compute_distance(error44)
+        	rot = compute_angle(error44)
+
+        	result.append([trans,rot])
+
+    if len(result)<2:
+        raise Exception("Couldn't find matching timestamp pairs between groundtruth and estimated trajectory!")
+        
+    return result
 
 def align(model,data):
     """Align two trajectories using the method of Horn (closed-form).
@@ -143,25 +229,44 @@ if __name__=="__main__":
     parser.add_argument('--save', help='save aligned second trajectory to disk (format: stamp2 x2 y2 z2)')
     parser.add_argument('--save_associations', help='save associated first and aligned second trajectory to disk (format: stamp1 x1 y1 z1 stamp2 x2 y2 z2)')
     parser.add_argument('--plot', help='plot the first and the aligned second trajectory to an image (format: png)')
+    parser.add_argument('--plot_rpe_trans', help='plot rpe_trans (format: png)')
+    parser.add_argument('--plot_rpe_rot', help='plot rpe_rot (format: png)')
     parser.add_argument('--verbose', help='print all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)', action='store_true')
     parser.add_argument('--verbose2', help='print scale eror and RMSE absolute translational error in meters after alignment with and without scale correction', action='store_true')
     args = parser.parse_args()
 
     first_list = associate.read_file_list(args.first_file, False)
+    a = first_list.keys()
+    for x in a:
+	temp = first_list[x][3]
+    	first_list[x][3] = first_list[x][4]
+	first_list[x][4] = first_list[x][5]
+	first_list[x][5] = first_list[x][6]
+	first_list[x][6] = temp
     second_list = associate.read_file_list(args.second_file, False)
 
-    matches = associate.associate(first_list, second_list,float(args.offset),float(args.max_difference))    
+    matches = associate.associate(first_list, second_list,float(args.offset),float(args.max_difference)) 
+
     if len(matches)<2:
         sys.exit("Couldn't find matching timestamp pairs between groundtruth and estimated trajectory! Did you choose the correct sequence?")
     first_xyz = numpy.matrix([[float(value) for value in first_list[a][0:3]] for a,b in matches]).transpose()
+    first_xyz_rel = numpy.matrix([[float(value) for value in first_list[a][0:7]] for a,b in matches])
     second_xyz = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for a,b in matches]).transpose()
+    second_xyz_rel = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:7]] for a,b in matches])
     dictionary_items = second_list.items()
     sorted_second_list = sorted(dictionary_items)
 
     second_xyz_full = numpy.matrix([[float(value)*float(args.scale) for value in sorted_second_list[i][1][0:3]] for i in range(len(sorted_second_list))]).transpose() # sorted_second_list.keys()]).transpose()
     rot,transGT,trans_errorGT,trans,trans_error, scale = align(second_xyz,first_xyz)
+
+    rpe = compute_relative_error(first_xyz_rel,second_xyz_rel, matches)
+
+    trans_error_rpe = numpy.array(rpe)[:,0]
+    rot_error = numpy.array(rpe)[:,1]
+    rot_error_deg = rot_error * 180.0 / numpy.pi
     
     second_xyz_aligned = scale * rot * second_xyz + trans
+    #second_xyz_aligned = scale * rot * second_xyz + transGT
     second_xyz_notscaled = rot * second_xyz + trans
     second_xyz_notscaled_full = rot * second_xyz_full + trans
     first_stamps = first_list.keys()
@@ -171,7 +276,8 @@ if __name__=="__main__":
     second_stamps = second_list.keys()
     second_stamps.sort()
     second_xyz_full = numpy.matrix([[float(value)*float(args.scale) for value in second_list[b][0:3]] for b in second_stamps]).transpose()
-    second_xyz_full_aligned = scale * rot * second_xyz_full + trans
+    second_xyz_full_aligned = scale * rot * second_xyz_full + trans 
+    #second_xyz_full_aligned = scale * rot * second_xyz_full + transGT 
     
     if args.verbose:
         print "compared_pose_pairs %d pairs"%(len(trans_error))
@@ -183,6 +289,21 @@ if __name__=="__main__":
         print "absolute_translational_error.min %f m"%numpy.min(trans_error)
         print "absolute_translational_error.max %f m"%numpy.max(trans_error)
         print "max idx: %i" %numpy.argmax(trans_error)
+
+        print "compared_pose_pairs_for_relative_error %d pairs"%(len(rpe))
+        print "translational_error.rmse %f m"%numpy.sqrt(numpy.dot(trans_error_rpe,trans_error_rpe) / len(trans_error_rpe))
+        print "translational_error.mean %f m"%numpy.mean(trans_error_rpe)
+        print "translational_error.median %f m"%numpy.median(trans_error_rpe)
+        print "translational_error.std %f m"%numpy.std(trans_error_rpe)
+        print "translational_error.min %f m"%numpy.min(trans_error_rpe)
+        print "translational_error.max %f m"%numpy.max(trans_error_rpe)
+
+        print "rotational_error.rmse %f deg"%(numpy.sqrt(numpy.dot(rot_error,rot_error) / len(rot_error)) * 180.0 / numpy.pi)
+        print "rotational_error.mean %f deg"%(numpy.mean(rot_error) * 180.0 / numpy.pi)
+        print "rotational_error.median %f deg"%(numpy.median(rot_error) * 180.0 / numpy.pi)
+        print "rotational_error.std %f deg"%(numpy.std(rot_error) * 180.0 / numpy.pi)
+        print "rotational_error.min %f deg"%(numpy.min(rot_error) * 180.0 / numpy.pi)
+        print "rotational_error.max %f deg"%(numpy.max(rot_error) * 180.0 / numpy.pi)
     else:
         # print "%f, %f " % (numpy.sqrt(numpy.dot(trans_error,trans_error) / len(trans_error)),  scale)
         # print "%f,%f" % (numpy.sqrt(numpy.dot(trans_error,trans_error) / len(trans_error)),  scale)
@@ -213,7 +334,7 @@ if __name__=="__main__":
         ax = fig.add_subplot(111)
         plot_traj(ax,first_stamps,first_xyz_full.transpose().A,'-',"black","ground truth")
         plot_traj(ax,second_stamps,second_xyz_full_aligned.transpose().A,'-',"blue","estimated")
-        label="difference"
+        label="difference"  
         for (a,b),(x1,y1,z1),(x2,y2,z2) in zip(matches,first_xyz.transpose().A,second_xyz_aligned.transpose().A):
             ax.plot([x1,x2],[y1,y2],'-',color="red",label=label)
             label=""
@@ -225,5 +346,27 @@ if __name__=="__main__":
         plt.axis('equal')
         plt.savefig(args.plot,format="pdf")
 
+    if args.plot_rpe_trans:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import matplotlib.pylab as pylab
+        from matplotlib.patches import Ellipse
+        fig = plt.figure()
+        plt.xlabel("Frame Number")
+        plt.ylabel("Relative Translational Error (m)")
+        plt.ylim(-0.03, 0.73)
+        plt.plot(trans_error_rpe)
+        plt.savefig(args.plot_rpe_trans,format="pdf")
 
-       
+    if args.plot_rpe_rot:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import matplotlib.pylab as pylab
+        from matplotlib.patches import Ellipse
+        fig = plt.figure()
+        plt.xlabel("Frame Number")
+        plt.ylabel("Relative Rotational Error (deg)")
+        plt.plot(rot_error_deg)
+        plt.savefig(args.plot_rpe_rot,format="pdf")
