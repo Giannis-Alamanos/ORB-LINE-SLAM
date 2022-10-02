@@ -355,7 +355,6 @@ if __name__=="__main__":
         fig = plt.figure()
         plt.xlabel("Frame Number")
         plt.ylabel("Relative Translational Error (m)")
-        plt.ylim(-0.03, 0.73)
         plt.plot(trans_error_rpe)
         plt.savefig(args.plot_rpe_trans,format="pdf")
 
