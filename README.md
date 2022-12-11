@@ -28,6 +28,19 @@ This software is based on [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) d
 
 ORB-LINE-SLAM is released under [GPLv3 license](https://github.com/Giannis-Alamanos/ORB-LINE-SLAM/blob/main/LICENSE). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/Giannis-Alamanos/ORB-LINE-SLAM/blob/main/Dependencies.md).
 
+If you use ORB-LINE-SLAM in an academic work, please cite:
+
+```
+@article{ORB-LINE-SLAM-Preprint,
+author = "Ioannis Alamanos and Costas Tzafestas",
+title = "{ORB-LINE-SLAM:  An  Open-Source  Stereo  Visual  SLAM  System  with Point  and  Line  Features}",
+year = "2022",
+month = "12",
+url = "https://www.techrxiv.org/articles/preprint/ORB-LINE-SLAM_An_Open-Source_Stereo_Visual_SLAM_System_with_Point_and_Line_Features/21691949",
+doi = "10.36227/techrxiv.21691949.v1"
+}
+```
+
 # 2. Prerequisites
 We have tested the library in **Ubuntu 18.04**, but it should be easy to compile in other platforms. A powerful computer will ensure real-time performance and provide more stable and accurate results. In order to reduce the computational time, the user can decrease the value of the lsd_scale parameter in the yaml file. Moreover, through the same yaml file which can be found in PATH/Examples/Stereo-Line, the user can choose between different SLAM modes (only-line SLAM and point-line SLAM) and Line Detectors (LSD and EDlines).
 
