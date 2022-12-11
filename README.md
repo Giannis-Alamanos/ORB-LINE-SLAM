@@ -8,6 +8,8 @@ This software is based on [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) d
 
 ### Related Publications:
 
+[ORB-LINE-SLAM] Alamanos, Ioannis; Tzafestas, Costas (2022): ORB-LINE-SLAM: An Open-Source Stereo Visual SLAM System with Point and Line Features. TechRxiv. Preprint. **[PDF](https://doi.org/10.36227/techrxiv.21691949.v1)**.
+
 [ORB-SLAM3] Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M. M. Montiel and Juan D. Tardós, **ORB-SLAM3: An Accurate Open-Source Library for Visual, Visual-Inertial and Multi-Map SLAM**, IEEE Transactions on Robotics, 2021. **[PDF](https://arxiv.org/pdf/2007.11898.pdf)**.
 
 [IMU-Initialization] Carlos Campos, J. M. M. Montiel and Juan D. Tardós, **Inertial-Only Optimization for Visual-Inertial Initialization**, *ICRA 2020*. **[PDF](https://arxiv.org/pdf/2003.05766.pdf)**
